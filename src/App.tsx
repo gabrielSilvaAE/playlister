@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import './App.css'
 import { promptTrack } from './harmix/harmix'
 import logo from './assets/logo.png';
-import { getUserCode, searchTrackSpotify, spotifyAuthenticateUser } from './spotify/spotify';
+import { getUserCode, getUser, searchTrackSpotify, spotifyAuthenticateUser } from './spotify/spotify';
 type FormInputs = {
   searchQuery: string;
 }
@@ -18,6 +18,7 @@ function App() {
 
   const [playlistLink, setPlaylistLink] = useState<string>('');
   const [music, setMusic] = useState<string[]>(['No playlist generated yet']);
+  const [user, setUser] = useState<any>(null);
 
   const onSubmit = async (data: FormInputs) => {
     try {
@@ -35,6 +36,13 @@ function App() {
 
   useEffect(() => {
     getUserCode();
+    getUser().then((user) => {
+      console.log(user);
+      setUser({
+        name: user.display_name,
+        image: user.images[0].url,
+      });
+    });
   }, []);
 
   return (
@@ -46,9 +54,22 @@ function App() {
         <div>
           <h2>Log in to Spotify</h2>
           <div className="auth-container">
-            <button 
+            {user ? (
+              <button 
               className="spotify-auth-btn"
               onClick={handleSpotifyAuth}
+              >
+                <img 
+                  src={user.image} 
+                  alt="user avatar" 
+                  className="spotify-logo"
+                />
+                {user.name}
+              </button>
+            ) : (
+              <button 
+                className="spotify-auth-btn"
+                onClick={handleSpotifyAuth}
             >
               <img 
                 src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" 
@@ -57,6 +78,7 @@ function App() {
               />
               Connect with Spotify
             </button>
+            )}
           </div>
         </div>
         <div className="card">

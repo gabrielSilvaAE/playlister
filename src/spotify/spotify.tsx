@@ -1,7 +1,10 @@
+const redirectUri = "http://127.0.0.1:5173/callback";
+const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
+const authEndpoint = "https://accounts.spotify.com/authorize";
+const tokenEndpoint = "https://accounts.spotify.com/api/token";
+
 export const spotifyAuthenticateUser = async () => {
-    const authEndpoint = "https://accounts.spotify.com/authorize";
-    const redirectUri = "http://127.0.0.1:5173/callback";
-    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
     const scopes = [
       "user-read-private",
       "user-read-email",
@@ -12,49 +15,48 @@ export const spotifyAuthenticateUser = async () => {
       "playlist-read-private",
       "playlist-read-collaborative",
     ]
-    const authUrl = `${authEndpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes.join('%20')}&state=izzy&response_type=code`;
+    const authUrl = `${authEndpoint}?client_id=${clientId}&show_dialog=true&redirect_uri=${redirectUri}&scope=${scopes.join('%20')}&state=izzy&response_type=code`;
     window.location.href = authUrl;
 }
 
-// export const getSpotifyToken = async () => {
-//   const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-//   const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
-
-//   const response = await fetch('https://accounts.spotify.com/api/token', {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/x-www-form-urlencoded',
-//       'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
-//     },
-//     body: new URLSearchParams({
-//       grant_type: 'client_credentials',
-//       client_id: clientId,
-//       client_secret: clientSecret
-//     })
-//   });
-//   const data = await response.json();
-//   localStorage.setItem('accessToken', data.access_token);
-// }
+export const getSpotifyToken = async () => {
+  const response = await fetch(tokenEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
+    },
+    body: new URLSearchParams({
+      code: localStorage.getItem('userCode') || '',
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      client_secret: clientSecret
+    })
+  });
+  const data = await response.json();
+  console.log(data);
+  if(data.access_token) {
+    localStorage.setItem('accessToken', data.access_token);
+  }
+}
 
 export const getUserCode = async () => {
-//   let accessToken = localStorage.getItem('accessToken') || '';
-//   await getSpotifyToken();
-//   accessToken = localStorage.getItem('accessToken') || '';
-//   if (!accessToken) {
-//     throw new Error('No access token found');
-//   }
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
-  const token = code || localStorage.getItem('spotifyToken') || '';
-  localStorage.setItem('spotifyToken', token);
+  localStorage.setItem('userCode', code || '');
+  await getSpotifyToken();
+}
 
-  // this shouldnt be here
-  const res = await fetch(`https://api.spotify.com/v1/me`, {
+export const getUser = async () => {
+  const accessToken = localStorage.getItem('accessToken');
+  const response = await fetch(`https://api.spotify.com/v1/me`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
-  console.log(res);
+  const data = await response.json();
+  return data;
 }
 
 export const searchTrackSpotify = async (query: string) => {
