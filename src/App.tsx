@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import './App.css'
 import { promptTrack } from './harmix/harmix'
 import logo from './assets/logo.png';
-import { getUserCode, getUser, searchTrackSpotify, spotifyAuthenticateUser } from './spotify/spotify';
+import { getUserCode, getUser, searchTrackSpotify, spotifyAuthenticateUser, createPlaylist } from './spotify/spotify';
 type FormInputs = {
   searchQuery: string;
 }
@@ -17,36 +17,46 @@ function App() {
   }
 
   const [playlistLink, setPlaylistLink] = useState<string>('');
-  const [music, setMusic] = useState<string[]>(['No playlist generated yet']);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const onSubmit = async (data: FormInputs) => {
+    setLoading(true);
     try {
       const results = await promptTrack(data.searchQuery);
       const mappedResults = results.tracks.map(({ metadata }) =>`${metadata.artists[0] || ''} - ${metadata.track_title}`);
       const spotifyResults = await Promise.all(mappedResults.map(async (result) => 
         await searchTrackSpotify(result)
       ));
-      
-      setMusic(spotifyResults.map((result) => result[0].uri));
+      const playlistTracks = spotifyResults.map((result) => result[0].uri);
+      const playlist = await createPlaylist(user.id, data.searchQuery, playlistTracks);
+      console.log(playlist);
+      setPlaylistLink(playlist.external_urls.spotify);
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     getUserCode();
     getUser().then((user) => {
-      console.log(user);
       setUser({
         name: user.display_name,
         image: user.images[0].url,
+        id: user.id
       });
     });
   }, []);
 
   return (
     <>
+      {loading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+        </div>
+      )}
       <header>
         <h1><img src={logo} alt="Logo" className="logo-title" />Playlister - Your new favorite songs, right in your streaming service</h1>
       </header>
@@ -62,7 +72,7 @@ function App() {
                 <img 
                   src={user.image} 
                   alt="user avatar" 
-                  className="spotify-logo"
+                  className="spotify-logo spotify-image"
                 />
                 {user.name}
               </button>
@@ -91,13 +101,13 @@ function App() {
               {...register("searchQuery", { required: "This field is required" })}
             />
             {errors.searchQuery && <span className="error-message">{errors.searchQuery.message}</span>}
-            <button type="submit">Generate</button>
+            <button type="submit" disabled={loading}>Generate</button>
           </form>
         </div>
         <div className="card">
           <h2>Go listen to some music</h2>
           <div className="read-the-docs">
-            {music.map(music => <p key={music}>{music}</p>)}
+            {playlistLink && <a href={playlistLink} target="_blank" rel="noopener noreferrer">Open in Spotify</a>}
           </div>
         </div>
       </main>
