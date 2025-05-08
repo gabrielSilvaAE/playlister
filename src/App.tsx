@@ -44,16 +44,17 @@ function App() {
   }
 
   useEffect(() => {
-    if(user) {
-      getUserCode();
-      getUser().then((user) => {
-        setUser({
-          name: user.display_name,
-          image: user.images[0].url,
-          id: user.id
+    getUserCode().then(() => {
+      if(localStorage.getItem('accessToken')) {
+        getUser().then((user) => {
+          setUser({
+            name: user.display_name,
+            image: user.images[0].url,
+            id: user.id
+          });
         });
-      });
-    }
+      }
+    });
   }, []);
 
   return (

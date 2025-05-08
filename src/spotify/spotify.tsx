@@ -1,4 +1,5 @@
-const redirectUri = "https://genuine-dolphin-b43693.netlify.app/";
+// const redirectUri = "https://genuine-dolphin-b43693.netlify.app/";
+const redirectUri = "http://127.0.0.1:5173/callback";
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
 const authEndpoint = "https://accounts.spotify.com/authorize";
@@ -45,8 +46,10 @@ export const getSpotifyToken = async () => {
 export const getUserCode = async () => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
-  localStorage.setItem('userCode', code || '');
-  await getSpotifyToken();
+  if(code) {
+    localStorage.setItem('userCode', code);
+    await getSpotifyToken();
+  }
 }
 
 export const getUser = async () => {
