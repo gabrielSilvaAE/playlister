@@ -1,5 +1,5 @@
-// const redirectUri = "https://genuine-dolphin-b43693.netlify.app/";
-const redirectUri = "http://127.0.0.1:5173/callback";
+const redirectUri = "https://genuine-dolphin-b43693.netlify.app/";
+// const redirectUri = "http://127.0.0.1:5173/callback";
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
 const authEndpoint = "https://accounts.spotify.com/authorize";
