@@ -4,6 +4,10 @@ import './App.css'
 import { promptTrack } from './harmix/harmix'
 import logo from './assets/logo.png';
 import { getUserCode, getUser, searchTrackSpotify, spotifyAuthenticateUser, createPlaylist } from './spotify/spotify';
+import AuthButton from './components/AuthButton';
+import PlaylistForm from './components/PlaylistForm';
+import PlaylistResult from './components/PlaylistResult';
+
 type FormInputs = {
   searchQuery: string;
 }
@@ -40,14 +44,16 @@ function App() {
   }
 
   useEffect(() => {
-    getUserCode();
-    getUser().then((user) => {
-      setUser({
-        name: user.display_name,
-        image: user.images[0].url,
-        id: user.id
+    if(user) {
+      getUserCode();
+      getUser().then((user) => {
+        setUser({
+          name: user.display_name,
+          image: user.images[0].url,
+          id: user.id
+        });
       });
-    });
+    }
   }, []);
 
   return (
@@ -63,53 +69,16 @@ function App() {
       <main>
         <div>
           <h2>Log in to Spotify</h2>
-          <div className="auth-container">
-            {user ? (
-              <button 
-              className="spotify-auth-btn"
-              onClick={handleSpotifyAuth}
-              >
-                <img 
-                  src={user.image} 
-                  alt="user avatar" 
-                  className="spotify-logo spotify-image"
-                />
-                {user.name}
-              </button>
-            ) : (
-              <button 
-                className="spotify-auth-btn"
-                onClick={handleSpotifyAuth}
-            >
-              <img 
-                src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" 
-                alt="Spotify Logo" 
-                className="spotify-logo"
-              />
-              Connect with Spotify
-            </button>
-            )}
-          </div>
+          <AuthButton user={user} handleSpotifyAuth={handleSpotifyAuth} />
         </div>
-        <div className="card">
-          <h2>Generate a playlist</h2>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <input 
-              className="playlist-input" 
-              type="text" 
-              placeholder="Enter what you like" 
-              {...register("searchQuery", { required: "This field is required" })}
-            />
-            {errors.searchQuery && <span className="error-message">{errors.searchQuery.message}</span>}
-            <button type="submit" disabled={loading}>Generate</button>
-          </form>
-        </div>
-        <div className="card">
-          <h2>Go listen to some music</h2>
-          <div className="read-the-docs">
-            {playlistLink && <a href={playlistLink} target="_blank" rel="noopener noreferrer">Open in Spotify</a>}
-          </div>
-        </div>
+        <PlaylistForm 
+          onSubmit={onSubmit} 
+          register={register} 
+          handleSubmit={handleSubmit} 
+          errors={errors} 
+          loading={loading} 
+        />
+        <PlaylistResult playlistLink={playlistLink} />
       </main>
     </>
   )
