@@ -85,3 +85,57 @@ export interface TrackMetadata {
   harmix_attribution: string | null;
   harmix_source: string | null;
 }
+
+interface AudioReference {
+  external?: {
+    upload_id: string;
+  };
+  internal?: {
+    primary_key: {
+      source_id: string;
+      version_tag: string;
+      vocal: boolean;
+    };
+  };
+  segment?: {
+    start: number;
+    end: number;
+  };
+  ignore_vocals?: boolean;
+  prioritize_bpm?: boolean;
+  highlights?: boolean;
+}
+
+interface VideoReference {
+  upload_id: string;
+}
+
+interface LyricsCondition {
+  operator: 'contains' | 'not-contains';
+  value: string;
+}
+
+interface FilterCondition {
+  field: string;
+  operator: string;
+  value: any;
+}
+
+interface FilterGroup {
+  logic: 'and' | 'or';
+  conditions: (FilterCondition | FilterGroup)[];
+}
+
+interface Filters {
+  logic: 'and' | 'or';
+  conditions: (FilterCondition | FilterGroup)[];
+}
+
+export interface HarmixSearchParams {
+  audio_reference?: AudioReference;
+  video_reference?: VideoReference;
+  prompt?: string;
+  story?: string;
+  lyrics?: LyricsCondition[];
+  filters?: Filters;
+} 

@@ -10,11 +10,14 @@ import PlaylistResult from './components/PlaylistResult';
 
 type FormInputs = {
   searchQuery: string;
+  selectedGenres: string[];
+  selectedMoods: string[];
+  selectedInstruments: string[];
 }
 
 
 function App() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormInputs>();
+  const { register, handleSubmit, formState: { errors }, control } = useForm<FormInputs>();
   
   const handleSpotifyAuth = () => {
     spotifyAuthenticateUser();
@@ -27,15 +30,15 @@ function App() {
   const onSubmit = async (data: FormInputs) => {
     setLoading(true);
     try {
-      const results = await promptTrack(data.searchQuery);
+      const results = await promptTrack(data.searchQuery, data.selectedGenres, data.selectedMoods, data.selectedInstruments);
       const mappedResults = results.tracks.map(({ metadata }) =>`${metadata.artists[0] || ''} - ${metadata.track_title}`);
       const spotifyResults = await Promise.all(mappedResults.map(async (result) => 
         await searchTrackSpotify(result)
       ));
       const playlistTracks = spotifyResults.map((result) => result[0].uri);
-      const playlist = await createPlaylist(user.id, data.searchQuery, playlistTracks);
-      console.log(playlist);
-      setPlaylistLink(playlist.external_urls.spotify);
+      console.log(playlistTracks);
+      // const playlist = await createPlaylist(user.id, data.searchQuery, playlistTracks);
+      setPlaylistLink(playlistTracks.join(','));
     } catch (error) {
       console.log(error)
     } finally {
@@ -65,7 +68,10 @@ function App() {
         </div>
       )}
       <header>
-        <h1><img src={logo} alt="Logo" className="logo-title" />Playlister - Your new favorite songs, right in your streaming service</h1>
+        <h1 className="flex items-center">
+          <img src={logo} alt="Logo" className="logo-title" />
+          <span>Playlister - Your new favorite songs, right in your streaming service</span>
+        </h1>
       </header>
       <main>
         <div>
@@ -78,6 +84,8 @@ function App() {
           handleSubmit={handleSubmit} 
           errors={errors} 
           loading={loading} 
+          isUserLoggedIn={user !== null}
+          control={control}
         />
         <PlaylistResult playlistLink={playlistLink} />
       </main>
